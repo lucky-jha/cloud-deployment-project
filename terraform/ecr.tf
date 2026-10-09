@@ -1,0 +1,46 @@
+# ============================================================================
+# ECR — Elastic Container Registry
+# ============================================================================
+# Private Docker registry for the app image. The Auto Scaling Group's EC2
+# instances will pull from here in Phase 2D.
+# ============================================================================
+
+resource "aws_ecr_repository" "app" {
+  name                 = "${var.project_name}-app"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  encryption_configuration {
+    encryption_type = "AES256"
+  }
+
+  tags = {
+    Name = "${var.project_name}-app"
+  }
+}
+# ----------------------------------------------------------------------------
+# Lifecycle policy — keep the last 10 images, expire older ones
+# Prevents ECR storage costs from growing forever in a CI/CD environment
+# ----------------------------------------------------------------------------
+
+resource "aws_ecr_lifecycle_policy" "app" {
+  repository = aws_ecr_repository.app.name
+
+  policy = jsonencode({
+    rules = [{
+      rulePriority = 1
+      description  = "keep last 10 images"
+      selection = {
+        tagStatus   = "any"
+        countType   = "imageCountMoreThan"
+        countNumber = 10
+      }
+      action = {
+        type = "expire"
+      }
+    }]
+  })
+}
