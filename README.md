@@ -291,16 +291,44 @@ curl http://<ALB_DNS_NAME>/
 
 ---
 
-### Phase 2D — Launch Template + Auto Scaling Group *(upcoming)*
+### Phase 2D — Launch Template + Auto Scaling Group
 
 **Goal:** Auto-scaling fleet of Dockerized app instances registered with the ALB.
 
-**Planned resources:**
-- IAM role + instance profile for SSM Session Manager
-- IAM role for ECR image pull
-- Launch Template with `user_data` (installs Docker, pulls image, runs container)
-- Auto Scaling Group (desired 2, min 2, max 4, spanning both private app subnets)
-- ASG attachment to the target group
+**Resources created:**
+
+- **IAM role** `threetier-ec2-app-role` with 3 managed policies:
+  - `AmazonSSMManagedInstanceCore` — Session Manager access (no SSH keys, no open port 22)
+  - `AmazonEC2ContainerRegistryReadOnly` — pull images from ECR via instance role
+  - `CloudWatchAgentServerPolicy` — ship logs and metrics
+- **IAM instance profile** `threetier-ec2-app-profile`
+- **Launch Template** `threetier-lt-app-*`:
+  - Dynamic AMI lookup (latest Amazon Linux 2023)
+  - `t3.micro` instances (free tier eligible)
+  - Encrypted gp3 root volume
+  - IMDSv2 enforced (`http_tokens = "required"`)
+  - `user_data` script: installs Docker, pulls image from ECR using instance role, runs as systemd service
+- **Auto Scaling Group** `threetier-asg-app-*`:
+  - Desired 2, Min 2, Max 4
+  - Spans both private app subnets → one instance per AZ
+  - Registered with the ALB target group
+  - `health_check_type = "ELB"`
+  - `instance_refresh` enabled for rolling updates
+
+**Self-healing test — verified:**
+
+1. Terminated one instance via `aws ec2 terminate-instances`
+2. ASG detected loss and began replacement
+3. New instance launched, booted, pulled image, registered with ALB
+4. **Total recovery time: ~4 minutes**
+5. **Load test during failure:** 320 requests sent (2 req/sec for the duration)
+   - **309 succeeded (96.6%)**
+   - 11 transient 503s during the target-deregistration window
+   - The surviving AZ handled all successful requests — no total outage
+
+**Evidence:** Screenshots in `docs/screenshots/` show the ASG state transition and the continuous success counter climbing while one target was down.
+
+**Files:** `terraform/iam.tf`, `terraform/launch_template.tf`, `terraform/user_data.sh.tpl`, `terraform/asg.tf`
 
 ---
 
