@@ -332,15 +332,56 @@ curl http://<ALB_DNS_NAME>/
 
 ---
 
-### Phase 3 — RDS PostgreSQL Multi-AZ *(upcoming)*
+### Phase 3 — RDS PostgreSQL Multi-AZ
 
-**Goal:** Managed database with automatic failover.
+**Goal:** Managed PostgreSQL database with automatic failover; app connected end-to-end.
 
-**Planned resources:**
-- DB subnet group (spanning private DB subnets)
-- RDS PostgreSQL instance (`db.t3.micro` for dev, Multi-AZ)
-- Secrets Manager entry for the master password
-- Security group `sg-db` (already created in Phase 2A)
+**Resources created:**
+
+- **Random password** (`random_password`) — 32 chars, avoiding shell-unfriendly characters
+- **SSM Parameter Store** `/threetier/dev/db/password` — SecureString, encrypted at rest
+- **DB Subnet Group** spanning both private DB subnets (required for Multi-AZ)
+- **DB Parameter Group** `postgres16` with connection/disconnection logging enabled
+- **RDS PostgreSQL 16.4** `db.t3.micro`:
+  - **Multi-AZ** — synchronous standby in second AZ, automatic failover in ~60s
+  - **Encrypted at rest** (AES256)
+  - **Not publicly accessible** — private subnets only
+  - Uses `sg-db` — only reachable from the app tier
+  - 7-day automated backups
+  - Custom parameter group for audit logging
+
+**IAM updates:**
+
+- Scoped inline policy `threetier-ssm-db-read` — grants `ssm:GetParameter` on exactly one ARN (the DB password parameter). Zero broader access.
+
+**Flask app rewrite:**
+
+- **New file layout:** `app.py` (routes), `db.py` (data layer), `templates/index.html` (dashboard), `static/style.css` (styling)
+- **New endpoints:**
+  - `GET /` — HTML dashboard
+  - `GET /api/visits` — atomic increment of visit counter, returns new value
+  - `GET /api/visits/current` — read-only, no increment
+  - `GET /db-test` — DB connectivity + latency
+- **Connection pooling** via `psycopg2.pool.ThreadedConnectionPool`
+- **Atomic counter** via `UPDATE ... RETURNING` — no race conditions
+- **Retry logic** in `init_db()` for container-boot-before-DB-ready scenarios
+
+**user_data updates:**
+
+- Fetches DB password from SSM Parameter Store using instance IAM role
+- Writes env vars to `/etc/app.env` with `chmod 600` (avoids `docker inspect` leakage)
+- Passes them to container via `--env-file`
+- Auto-detects AZ from IMDSv2 metadata
+- Container runs as systemd service with auto-restart
+
+**Verification:**
+
+- `curl http://<ALB_DNS>/db-test` → `{"status":"ok","db":{"connected":true,"latency_ms":0.77},...}`
+- HTML dashboard live at ALB URL — visit counter persists across refreshes
+- Refresh shows different hostnames + AZs → proves load balancing + multi-AZ
+- RDS console shows Multi-AZ: Yes
+
+**Key learning:** ASG `instance_refresh` block defines the strategy but does **not** trigger automatically. Manual trigger (or CI/CD) gives control over deploy timing — the safer pattern in production.
 
 ---
 
