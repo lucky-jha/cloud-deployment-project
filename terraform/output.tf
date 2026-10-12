@@ -52,4 +52,29 @@ output "launch_template_id" {
 output "ec2_app_role_arn" {
   value = aws_iam_role.ec2_app.arn
 }
-  
+
+output "rds_endpoint" {
+  description = "RDS connection endpoint (host:port)"
+  value       = aws_db_instance.postgres.endpoint
+  sensitive   = true
+}
+
+output "rds_address" {
+  description = "RDS hostname (without port)"
+  value       = aws_db_instance.postgres.address
+  sensitive   = true
+}
+
+output "rds_port" {
+  description = "RDS port"
+  value       = aws_db_instance.postgres.port
+}
+
+output "rds_db_name" {
+  description = "Initial database name"
+  value       = aws_db_instance.postgres.db_name
+}
+output "ssm_db_password_path" {
+  description = "SSM parameter name storing the DB password"
+  value       = aws_ssm_parameter.db_password.name
+}

@@ -44,10 +44,17 @@ resource "aws_launch_template" "app" {
 
   # user_data runs on first boot: installs Docker, pulls and runs the container
   user_data = base64encode(templatefile("${path.module}/user_data.sh.tpl", {
-    aws_region     = var.aws_region
-    ecr_repository_url       = aws_ecr_repository.app.repository_url
-    container_port = var.container_port
-    app_version    = "v1"
+    aws_region         = var.aws_region
+    ecr_repository_url = aws_ecr_repository.app.repository_url
+    container_port     = var.container_port
+    app_version        = var.app_version
+
+    # DB connection info — passed to the container as env vars
+    db_host              = aws_db_instance.postgres.address
+    db_port              = var.db_port
+    db_name              = var.db_name
+    db_user              = var.db_username
+    ssm_db_password_path = aws_ssm_parameter.db_password.name
   }))
 
   # Require IMDSv2 (more secure than IMDSv1)

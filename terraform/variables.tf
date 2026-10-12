@@ -50,3 +50,37 @@ variable "root_volume_size" {
   type        = number
   default     = 8
 }
+
+variable "db_name" {
+  description = "Name of DB created in RDS instance"
+  type        = string
+  default     = "appdb"
+}
+
+variable "db_username" {
+  description = "Master username for the DB"
+  type        = string
+  default     = "appuser"
+}
+variable "db_instance_class" {
+  description = "RDS instance class"
+  type        = string
+  default     = "db.t3.micro"
+}
+
+variable "db_allocated_storage" {
+  description = "RDS allocated storage (GB)"
+  type        = number
+  default     = 20
+}
+
+variable "db_engine_version" {
+  description = "PostgreSQL engine version"
+  type        = string
+  default     = "16.15"
+}
+variable "app_version" {
+  description = "Version of the app container"
+  type        = string
+  default     = "v1"
+}

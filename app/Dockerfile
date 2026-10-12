@@ -21,19 +21,26 @@ WORKDIR /app
 
 COPY --from=builder /root/.local /home/appuser/.local
 
-COPY app.py .
+COPY app.py ./
+COPY db.py        ./
+COPY templates/   ./templates/
+COPY static/      ./static/
+
+# Ensure appuser owns the app dir (for potential runtime writes)
+RUN chown -R appuser:appuser /app
 
 # Set PATH so user-installed packages are found
 ENV PATH="/home/appuser/.local/bin:$PATH"   
 ENV PORT=5000
 ENV APP_VERSION=dev
 ENV BUILD_SHA=unknown
+ENV AWS_REGION=ap-south-1
 
 USER appuser
 
 EXPOSE 5000
 
-HEALTHCHECK --interval=5s --timeout=3s --start-period=10s --retries=3 \
+HEALTHCHECK --interval=20s --timeout=3s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--access-logfile", "-", "app:app"]

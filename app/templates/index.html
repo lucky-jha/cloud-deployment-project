@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Threetier · {{ hostname }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>" />
+</head>
+<body>
+  <div class="container">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <div class="logo">🚀</div>
+        <div>
+          <h1>Three-Tier App</h1>
+          <p class="subtitle">AWS · Terraform · Docker · PostgreSQL</p>
+        </div>
+      </div>
+      <div class="status-badge" id="status-badge">
+        <span class="dot"></span>
+        <span id="status-text">Checking…</span>
+      </div>
+    </header>
+
+    <!-- Serving instance card -->
+    <section class="card hero">
+      <div class="card-label">Served by</div>
+      <div class="card-value mono" id="hostname">{{ hostname }}</div>
+      <div class="card-meta">
+        <span class="pill">AZ: <strong id="az">{{ az }}</strong></span>
+        <span class="pill">Region: <strong>{{ region }}</strong></span>
+        <span class="pill">Version: <strong>{{ version }}</strong></span>
+      </div>
+      <div class="hint">↻ Refresh to hit a different instance behind the ALB</div>
+    </section>
+
+    <!-- Stats grid -->
+    <section class="grid">
+
+      <div class="card stat">
+        <div class="card-label">Total Visits</div>
+        <div class="stat-value" id="visits">—</div>
+        <div class="card-meta">
+          <span class="small">Stored in PostgreSQL · Multi-AZ</span>
+        </div>
+      </div>
+
+      <div class="card stat">
+        <div class="card-label">Database Latency</div>
+        <div class="stat-value" id="db-latency">—</div>
+        <div class="card-meta">
+          <span class="small">SELECT 1 round-trip</span>
+        </div>
+      </div>
+
+      <div class="card stat">
+        <div class="card-label">Build SHA</div>
+        <div class="stat-value mono small-value" id="build">{{ build }}</div>
+        <div class="card-meta">
+          <span class="small">From CI/CD pipeline</span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Architecture -->
+    <section class="card arch">
+      <div class="card-label">Architecture</div>
+      <div class="arch-flow">
+        <span class="node">🌐 Internet</span>
+        <span class="arrow">→</span>
+        <span class="node">⚖️ ALB</span>
+        <span class="arrow">→</span>
+        <span class="node">🖥️ EC2 + Docker</span>
+        <span class="arrow">→</span>
+        <span class="node">🐘 PostgreSQL</span>
+      </div>
+      <ul class="stack-list">
+        <li><strong>Compute:</strong> EC2 (Amazon Linux 2023) in Auto Scaling Group, multi-AZ</li>
+        <li><strong>Container:</strong> Docker (multi-stage, non-root), pulled from ECR</li>
+        <li><strong>Networking:</strong> VPC with 2 public + 4 private subnets, 2 NAT gateways</li>
+        <li><strong>Security:</strong> Chained security groups · SSM Session Manager (no SSH)</li>
+        <li><strong>Database:</strong> RDS PostgreSQL, Multi-AZ with automatic failover</li>
+        <li><strong>IaC:</strong> Terraform, remote state on S3</li>
+      </ul>
+    </section>
+
+    <!-- API quick links -->
+    <section class="card links">
+      <div class="card-label">API Endpoints</div>
+      <div class="link-grid">
+        <a href="/health" target="_blank" class="link">/health</a>
+        <a href="/version" target="_blank" class="link">/version</a>
+        <a href="/db-test" target="_blank" class="link">/db-test</a>
+        <a href="/api/visits/current" target="_blank" class="link">/api/visits/current</a>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>Built by <strong>Lucky Jha</strong> · <span id="year"></span></p>
+    </footer>
+
+  </div>
+
+  <script>
+    // ---- Health status ----
+    async function loadHealth() {
+      try {
+        const r = await fetch('/health');
+        const data = await r.json();
+        document.getElementById('status-text').textContent = data.status === 'healthy' ? 'Healthy' : 'Degraded';
+        document.getElementById('status-badge').classList.add(data.status === 'healthy' ? 'ok' : 'warn');
+      } catch (e) {
+        document.getElementById('status-text').textContent = 'Unreachable';
+        document.getElementById('status-badge').classList.add('err');
+      }
+    }
+
+    // ---- Visit counter (increments on page load) ----
+    async function loadVisits() {
+      try {
+        const r = await fetch('/api/visits');
+        const data = await r.json();
+        animateNumber('visits', data.visits);
+      } catch (e) {
+        document.getElementById('visits').textContent = 'err';
+      }
+    }
+
+    // ---- DB latency ----
+    async function loadDbLatency() {
+      try {
+        const r = await fetch('/db-test');
+        const data = await r.json();
+        if (data.db && data.db.latency_ms !== undefined) {
+          document.getElementById('db-latency').textContent = data.db.latency_ms + ' ms';
+        } else {
+          document.getElementById('db-latency').textContent = 'err';
+        }
+      } catch (e) {
+        document.getElementById('db-latency').textContent = 'err';
+      }
+    }
+
+    // ---- Simple number animation ----
+    function animateNumber(id, target) {
+      const el = document.getElementById(id);
+      const start = 0;
+      const duration = 500;
+      const startTime = performance.now();
+      function tick(now) {
+        const t = Math.min((now - startTime) / duration, 1);
+        const val = Math.floor(start + (target - start) * t);
+        el.textContent = val.toLocaleString();
+        if (t < 1) requestAnimationFrame(tick);
+        else el.textContent = target.toLocaleString();
+      }
+      requestAnimationFrame(tick);
+    }
+
+    // ---- Boot ----
+    document.getElementById('year').textContent = new Date().getFullYear();
+    loadHealth();
+    loadVisits();
+    loadDbLatency();
+  </script>
+</body>
+</html>

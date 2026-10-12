@@ -73,3 +73,27 @@ resource "aws_iam_instance_profile" "ec2_app" {
     Name = "${var.project_name}-ec2-app-profile"
   }
 }
+
+
+# ----------------------------------------------------------------------------
+# Inline policy — read the DB password from SSM Parameter Store
+# Scoped to only this project's parameter path (least privilege)
+# ----------------------------------------------------------------------------
+resource "aws_iam_role_policy" "ssm_db_read" {
+  name = "${var.project_name}-ssm-db-read"
+  role = aws_iam_role.ec2_app.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters",
+        ]
+        Resource = aws_ssm_parameter.db_password.arn
+      }
+    ]
+  })
+}
