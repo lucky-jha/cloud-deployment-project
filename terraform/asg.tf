@@ -40,6 +40,9 @@ resource "aws_autoscaling_group" "app" {
       min_healthy_percentage = 50
       instance_warmup        = 60
     }
+    triggers = [
+      "launch_template"
+    ]
   }
 
   # Enable metrics collection at 1-minute granularity (Phase 4 needs this)
