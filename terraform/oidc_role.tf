@@ -159,7 +159,8 @@ resource "aws_iam_role_policy" "github_actions" {
           "logs:DescribeLogGroups",
           "ecr:ListTagsForResource",
           "iam:GetOpenIDConnectProvider",
-          "ssm:ListTagsForResource"
+          "ssm:ListTagsForResource",
+          "ecr:GetLifecyclePolicy",
 
         ]
         Resource = "*"

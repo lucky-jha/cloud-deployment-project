@@ -112,7 +112,7 @@ jobs:
               Successful|Cancelled|Failed|RollbackSuccessful|RollbackFailed)
                 echo "Refresh finished: $STATUS"
                 if [ "$STATUS" != "Successful" ]; then
-                  echo "Refresh did not succeed cleanly "
+                  echo "Refresh did not succeed cleanly ."
                   exit 1
                 fi
                 exit 0
