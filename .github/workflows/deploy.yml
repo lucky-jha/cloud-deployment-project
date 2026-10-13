@@ -100,7 +100,7 @@ jobs:
           echo "Target ASG: $ASG_NAME"
 
           # Cancel any refresh currently in progress (idempotent)
-          echo "Cancelling any in-progress refresh..."
+          echo "Cancelling any in-progress refresh.."
           aws autoscaling cancel-instance-refresh --auto-scaling-group-name "$ASG_NAME" 2>/dev/null || echo "No refresh to cancel"
 
           # Wait for cancellation to register
