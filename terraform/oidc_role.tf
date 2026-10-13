@@ -33,7 +33,7 @@ resource "aws_iam_role" "github_actions" {
           }
           # Scope to THIS repo only. No other GitHub repo can assume this role.
           StringLike = {
-            "token.actions.githubusercontent.com:sub" = "repo:lucky-jha/cloud-deployment-project:*"
+            "token.actions.githubusercontent.com:sub" = "repo:lucky-jha@248385222/cloud-deployment-project@1409561091"
           }
         }
       }

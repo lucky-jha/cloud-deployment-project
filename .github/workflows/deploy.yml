@@ -106,7 +106,7 @@ jobs:
 
             STATUS=$(echo "$REFRESH" | awk '{print $1}')
             PCT=$(echo "$REFRESH" | awk '{print $2}')
-            echo "[$i] Refresh status: $STATUS ($PCT%)"
+            echo "[$i] Refresh o status: $STATUS ($PCT%)"
 
             case "$STATUS" in
               Successful|Cancelled|Failed|RollbackSuccessful|RollbackFailed)
