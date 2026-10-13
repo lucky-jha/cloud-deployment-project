@@ -71,7 +71,7 @@ def init_db():
             logger.info("Database initialized")
             return
         except Exception as e:
-            logger.warning(f"init_db attempt {attempt + 1} failed: {e}")
+            logger.warning(f" init_db attempt {attempt + 1} failed: {e}")
             time.sleep(2)
     logger.error("init_db exhausted retries")
 

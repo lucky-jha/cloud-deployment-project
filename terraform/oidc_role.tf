@@ -170,6 +170,7 @@ resource "aws_iam_role_policy" "github_actions" {
             "s3:GetLifecycleConfiguration",
             "s3:GetBucketPolicy",
             "s3:ListBucket",
+            "budgets:ListTagsForResource",
 
         ]
         Resource = "*"
@@ -190,7 +191,8 @@ resource "aws_iam_role_policy" "github_actions" {
     "s3:PutBucketVersioning",
     "s3:PutLifecycleConfiguration",
     "s3:PutBucketPublicAccessBlock",
-    "s3:ListBucket"
+    "s3:ListBucket",
+    "s3:GetBucketCORS",
   ]
   Resource = [
     "arn:aws:s3:::threetier-alb-logs-542035163411",
