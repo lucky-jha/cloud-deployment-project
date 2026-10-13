@@ -156,7 +156,11 @@ resource "aws_iam_role_policy" "github_actions" {
           "ssm:GetParameter",
           "ssm:GetParameters",
           "ssm:DescribeParameters",
-          "logs:DescribeLogGroups"
+          "logs:DescribeLogGroups",
+          "ecr:ListTagsForResource",
+          "iam:GetOpenIDConnectProvider",
+          "ssm:ListTagsForResource"
+
         ]
         Resource = "*"
       },
