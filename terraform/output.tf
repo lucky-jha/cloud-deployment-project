@@ -78,3 +78,7 @@ output "ssm_db_password_path" {
   description = "SSM parameter name storing the DB password"
   value       = aws_ssm_parameter.db_password.name
 }
+output "github_actions_role_arn" {
+  description = "ARN of the IAM role assumed by GitHub Actions"
+  value       = aws_iam_role.github_actions.arn
+}
