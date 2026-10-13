@@ -93,23 +93,26 @@ jobs:
         run: |
           terraform apply -auto-approve -input=false
 
+            # ---------- 10. Trigger + wait for instance refresh ----------
       - name: Trigger and wait for instance refresh
         run: |
           ASG_NAME=$(cd ${{ env.TF_WORKING_DIR }} && terraform output -raw asg_name)
-          echo "Starting insatnce refresh for $ASG_NAME"
+          echo "Target ASG: $ASG_NAME"
 
-          # cancel any in-progress refresh first
-          aws autoscaling cancel-instance-refresh \
-            --auto-scaling-group-name "$ASG_NAME" 2>/dev/null || true
-            sleep 5
-          
-          # start a fresh one 
+          # Cancel any refresh currently in progress (idempotent)
+          echo "Cancelling any in-progress refresh..."
+          aws autoscaling cancel-instance-refresh --auto-scaling-group-name "$ASG_NAME" 2>/dev/null || echo "No refresh to cancel"
 
+          # Wait for cancellation to register
+          sleep 15
+
+          # Start a fresh refresh
+          echo "Starting new instance refresh..."
           aws autoscaling start-instance-refresh \
             --auto-scaling-group-name "$ASG_NAME" \
             --preferences '{"MinHealthyPercentage": 50, "InstanceWarmup": 60}'
-        
-            
+
+          # Wait up to 20 minutes
           for i in $(seq 1 60); do
             REFRESH=$(aws autoscaling describe-instance-refreshes \
               --auto-scaling-group-name "$ASG_NAME" \
@@ -118,20 +121,18 @@ jobs:
 
             STATUS=$(echo "$REFRESH" | awk '{print $1}')
             PCT=$(echo "$REFRESH" | awk '{print $2}')
-            echo "[$i] Refresh  status: $STATUS ($PCT%)"
+            echo "[$i] Refresh status: $STATUS ($PCT%)"
 
             case "$STATUS" in
-              Successful|Cancelled|Failed|RollbackSuccessful|RollbackFailed)
-                echo "Refresh finished: $STATUS"
-                if [ "$STATUS" != "Successful" ]; then
-                  echo "Refresh did not succeed cleanly ."
-                  exit 1
-                fi
+              Successful)
+                echo "Refresh complete."
                 exit 0
                 ;;
-              *)
-                sleep 20
+              Cancelled|Failed|RollbackSuccessful|RollbackFailed)
+                echo "Refresh ended with: $STATUS"
+                exit 1
                 ;;
+              *) sleep 20 ;;
             esac
           done
 
