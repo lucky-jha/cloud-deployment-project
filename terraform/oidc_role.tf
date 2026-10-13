@@ -161,10 +161,53 @@ resource "aws_iam_role_policy" "github_actions" {
           "iam:GetOpenIDConnectProvider",
           "ssm:ListTagsForResource",
           "ecr:GetLifecyclePolicy",
+          "budgets:ViewBudget",
+            "budgets:DescribeBudgets",
+            "s3:GetBucketAcl",
+            "s3:GetEncryptionConfiguration",
+            "s3:GetBucketPublicAccessBlock",
+            "s3:GetBucketVersioning",
+            "s3:GetLifecycleConfiguration",
+            "s3:GetBucketPolicy",
+            "s3:ListBucket",
 
         ]
         Resource = "*"
       },
+
+      {
+  Sid    = "S3LogsBucketAccess"
+  Effect = "Allow"
+  Action = [
+    "s3:GetBucketAcl",
+    "s3:GetEncryptionConfiguration",
+    "s3:GetBucketPublicAccessBlock",
+    "s3:GetBucketVersioning",
+    "s3:GetLifecycleConfiguration",
+    "s3:GetBucketPolicy",
+    "s3:PutBucketPolicy",
+    "s3:PutEncryptionConfiguration",
+    "s3:PutBucketVersioning",
+    "s3:PutLifecycleConfiguration",
+    "s3:PutBucketPublicAccessBlock",
+    "s3:ListBucket"
+  ]
+  Resource = [
+    "arn:aws:s3:::threetier-alb-logs-542035163411",
+    "arn:aws:s3:::threetier-alb-logs-542035163411/*"
+  ]
+},
+{
+  Sid    = "Budgets"
+  Effect = "Allow"
+  Action = [
+    "budgets:ViewBudget",
+    "budgets:DescribeBudgets",
+    "budgets:ModifyBudget"
+  ]
+  Resource = "*"
+},  
+      
 
       # ---------- IAM PassRole: needed so Terraform can attach the instance profile ----------
       {

@@ -58,7 +58,7 @@ def instance_info():
             "az": os.environ.get("AWS_AZ", "unknown"),
         }
     except Exception:
-        return {"hostname": hostname, "az": "unknown"}
+        return {"hostname ": hostname, "az": "unknown"}
 
 
 # ---------------------------------------------------------------------------
