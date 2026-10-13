@@ -93,11 +93,23 @@ jobs:
         run: |
           terraform apply -auto-approve -input=false
 
-      - name: Wait for instance refresh
+      - name: Trigger and wait for instance refresh
         run: |
-          echo "Checking for in-progress instance refresh..."
           ASG_NAME=$(cd ${{ env.TF_WORKING_DIR }} && terraform output -raw asg_name)
+          echo "Starting insatnce refresh for $ASG_NAME"
 
+          # cancel any in-progress refresh first
+          aws autoscaling cancel-instance-refresh \
+            --auto-scaling-group-name "$ASG_NAME" 2>/dev/null || true
+            sleep 5
+          
+          # start a fresh one 
+
+          aws autoscaling start-instance-refresh \
+            --auto-scaling-group-name "$ASG_NAME" \
+            --preferences '{"MinHealthyPercentage": 50, "InstanceWarmup": 60}'
+        
+            
           for i in $(seq 1 60); do
             REFRESH=$(aws autoscaling describe-instance-refreshes \
               --auto-scaling-group-name "$ASG_NAME" \
