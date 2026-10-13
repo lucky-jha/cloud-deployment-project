@@ -9,7 +9,6 @@ terraform {
     bucket         = "threetier-tfstate-lucky-542035163411"
     key            = "terraform/dev/terraform.tfstate"
     region         = "ap-south-1"
-    dynamodb_table = "threetier-tf-lock"
     encrypt        = true
     use_lockfile   = true
   }
@@ -24,4 +23,4 @@ provider "aws" {
       ManagedBy   = "Terraform"
     }
   }
-}
+} 
