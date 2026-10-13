@@ -82,3 +82,12 @@ output "github_actions_role_arn" {
   description = "ARN of the IAM role assumed by GitHub Actions"
   value       = aws_iam_role.github_actions.arn
 }
+output "logs_bucket_name" {
+  description = "S3 bucket for ALB access logs"
+  value       = aws_s3_bucket.logs.bucket
+}
+
+output "budget_name" {
+  description = "AWS Budget name"
+  value       = aws_budgets_budget.monthly.name
+}

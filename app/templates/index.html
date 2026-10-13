@@ -132,17 +132,19 @@
 
     // ---- DB latency ----
     async function loadDbLatency() {
-      try {
+    try {
         const r = await fetch('/db-test');
         const data = await r.json();
         if (data.db && data.db.latency_ms !== undefined) {
-          document.getElementById('db-latency').textContent = data.db.latency_ms + ' ms';
+        document.getElementById('db-latency').textContent = data.db.latency_ms + ' ms';
         } else {
-          document.getElementById('db-latency').textContent = 'err';
-        }
-      } catch (e) {
         document.getElementById('db-latency').textContent = 'err';
-      }
+        console.warn('db-test response:', data);
+        }
+    } catch (e) {
+        document.getElementById('db-latency').textContent = 'err';
+        console.error('db-test failed:', e);
+    }
     }
 
     // ---- Simple number animation ----
@@ -162,10 +164,10 @@
     }
 
     // ---- Boot ----
-    document.getElementById('year').textContent = new Date().getFullYear();
-    loadHealth();
-    loadVisits();
-    loadDbLatency();
+   document.getElementById('year').textContent = new Date().getFullYear();
+   loadHealth();
+   setTimeout(loadVisits, 300);
+    setTimeout(loadDbLatency, 600);
   </script>
 </body>
 </html>

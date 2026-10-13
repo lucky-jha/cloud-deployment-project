@@ -6,11 +6,11 @@ terraform {
     }
   }
   backend "s3" {
-    bucket         = "threetier-tfstate-lucky-542035163411"
-    key            = "terraform/dev/terraform.tfstate"
-    region         = "ap-south-1"
-    encrypt        = true
-    use_lockfile   = true
+    bucket       = "threetier-tfstate-lucky-542035163411"
+    key          = "terraform/dev/terraform.tfstate"
+    region       = "ap-south-1"
+    encrypt      = true
+    use_lockfile = true
   }
 }
 provider "aws" {
@@ -23,4 +23,4 @@ provider "aws" {
       ManagedBy   = "Terraform"
     }
   }
-} 
+}

@@ -51,6 +51,12 @@ resource "aws_lb" "app" {
   # Send access logs to an S3 bucket (we'll add this in Phase 6)
   # enable_deletion_protection = false         # set true in production
   idle_timeout = 60
+
+  access_logs {
+    bucket  = aws_s3_bucket.logs.bucket
+    prefix  = "alb"
+    enabled = true
+  }
   tags = {
     Name = "${var.project_name}-alb"
   }

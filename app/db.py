@@ -33,8 +33,8 @@ def get_pool():
     if _pool is None:
         logger.info(f"Creating DB pool → {DB_HOST}:{DB_PORT}/{DB_NAME}")
         _pool = pool.ThreadedConnectionPool(
-            minconn=1,
-            maxconn=5,
+            minconn=2,
+            maxconn=10,
             host=DB_HOST,
             port=DB_PORT,
             dbname=DB_NAME,
