@@ -193,6 +193,17 @@ resource "aws_iam_role_policy" "github_actions" {
     "s3:PutBucketPublicAccessBlock",
     "s3:ListBucket",
     "s3:GetBucketCORS",
+    "s3:GetBucketWebsite",
+    "s3:GetBucketCORS",
+    "s3:GetBucketWebsite",
+    "s3:GetBucketLogging",
+    "s3:GetBucketRequestPayment",
+    "s3:GetBucketTagging",
+    "s3:GetBucketNotification",
+    "s3:GetBucketObjectLockConfiguration",
+    "s3:GetReplicationConfiguration",
+    "s3:GetAccelerateConfiguration",
+    "s3:GetBucketOwnershipControls",
   ]
   Resource = [
     "arn:aws:s3:::threetier-alb-logs-542035163411",
